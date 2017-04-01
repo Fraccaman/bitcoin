@@ -1176,7 +1176,14 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
     return nSubsidy;
 }
 
+// NEW: Avoid validation of checkpoints
 bool IsInitialBlockDownload()
+{
+    return false;
+}
+
+// NEW: old IsInitialBlockDownload function
+bool IsInitialBlockDownloadOriginal()
 {
     const CChainParams& chainParams = Params();
 
@@ -2027,7 +2034,7 @@ bool static FlushStateToDisk(CValidationState &state, FlushStateMode mode, int n
         nLastSetChain = nNow;
     }
     int64_t nMempoolSizeMax = GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000;
-    int64_t cacheSize = pcoinsTip->DynamicMemoryUsage() * 2; // Compensate for extra memory peak (x1.5-x1.9) at flush time.
+    int64_t cacheSize = pcoinsTip->DynamicMemoryUsage();
     int64_t nTotalSpace = nCoinCacheUsage + std::max<int64_t>(nMempoolSizeMax - nMempoolUsage, 0);
     // The cache is large and we're within 10% and 100 MiB of the limit, but we have time now (not in the middle of a block processing).
     bool fCacheLarge = mode == FLUSH_STATE_PERIODIC && cacheSize > std::max((9 * nTotalSpace) / 10, nTotalSpace - 100 * 1024 * 1024);
@@ -4297,20 +4304,21 @@ void DumpMempool(void)
 
 //! Guess how far we are in the verification process at the given block index
 double GuessVerificationProgress(const ChainTxData& data, CBlockIndex *pindex) {
-    if (pindex == NULL)
-        return 0.0;
-
-    int64_t nNow = time(NULL);
-
-    double fTxTotal;
-
-    if (pindex->nChainTx <= data.nTxCount) {
-        fTxTotal = data.nTxCount + (nNow - data.nTime) * data.dTxRate;
-    } else {
-        fTxTotal = pindex->nChainTx + (nNow - pindex->GetBlockTime()) * data.dTxRate;
-    }
-
-    return pindex->nChainTx / fTxTotal;
+  return 1.0;
+    // if (pindex == NULL)
+    //     return 0.0;
+    //
+    // int64_t nNow = time(NULL);
+    //
+    // double fTxTotal;
+    //
+    // if (pindex->nChainTx <= data.nTxCount) {
+    //     fTxTotal = data.nTxCount + (nNow - data.nTime) * data.dTxRate;
+    // } else {
+    //     fTxTotal = pindex->nChainTx + (nNow - pindex->GetBlockTime()) * data.dTxRate;
+    // }
+    //
+    // return pindex->nChainTx / fTxTotal;
 }
 
 class CMainCleanup
