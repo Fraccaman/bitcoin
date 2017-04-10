@@ -74,7 +74,13 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
     return bnNew.GetCompact();
 }
 
+// NEW: Accept even if the hash found dosen't satisfy the PoW
 bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params)
+{
+    return true;
+}
+
+bool CheckProofOfWorkOriginal(uint256 hash, unsigned int nBits, const Consensus::Params& params)
 {
     bool fNegative;
     bool fOverflow;

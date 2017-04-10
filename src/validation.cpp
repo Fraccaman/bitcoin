@@ -2841,7 +2841,13 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const 
     return true;
 }
 
+// NEW: we don't need to check if blocks are valid, since we assume it
 bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot)
+{
+    return true;
+}
+
+bool CheckBlockOriginal(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot)
 {
     // These are checks that are independent of context.
 
@@ -2876,7 +2882,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     // Size limits
     if (block.vtx.empty() || block.vtx.size() > MAX_BLOCK_BASE_SIZE || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) > MAX_BLOCK_BASE_SIZE)
         return state.DoS(100, false, REJECT_INVALID, "bad-blk-length", false, "size limits failed");
-
+        
     // First transaction must be coinbase, the rest must not be
     if (block.vtx.empty() || !block.vtx[0]->IsCoinBase())
         return state.DoS(100, false, REJECT_INVALID, "bad-cb-missing", false, "first tx is not coinbase");
@@ -2896,7 +2902,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
         nSigOps += GetLegacySigOpCount(*tx);
     }
     if (nSigOps * WITNESS_SCALE_FACTOR > MAX_BLOCK_SIGOPS_COST)
-        return state.DoS(100, false, REJECT_INVALID, "bad-blk-sigops", false, "out-of-bounds SigOpCount");
+        return state.DoS(100, false, REJECT_INVALID, "bad-blk-sigops", false, "out-of-bounds SigOpCount");;
 
     if (fCheckPOW && fCheckMerkleRoot)
         block.fChecked = true;
@@ -3155,7 +3161,7 @@ bool ProcessNewBlockHeaders(const std::vector<CBlockHeader>& headers, CValidatio
 
 /** Store block on disk. If dbp is non-NULL, the file is known to already reside on disk */
 static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidationState& state, const CChainParams& chainparams, CBlockIndex** ppindex, bool fRequested, const CDiskBlockPos* dbp, bool* fNewBlock)
-{
+{  
     const CBlock& block = *pblock;
 
     if (fNewBlock) *fNewBlock = false;
@@ -3164,8 +3170,9 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     CBlockIndex *pindexDummy = NULL;
     CBlockIndex *&pindex = ppindex ? *ppindex : pindexDummy;
 
-    if (!AcceptBlockHeader(block, state, chainparams, &pindex))
-        return false;
+    if (!AcceptBlockHeader(block, state, chainparams, &pindex)) {
+      return false;
+    }
 
     // Try to process all requested blocks that we don't have, but only
     // process an unrequested block if it's new and has enough work to
@@ -3233,6 +3240,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     return true;
 }
 
+// NEW: 
 bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock)
 {
     {
