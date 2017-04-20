@@ -192,8 +192,14 @@ public:
 
         return 3 * minRelayTxFee.GetFee(nSize);
     }
-
+    
+    // NEW: we care also about dust transactions, so lets send them also
     bool IsDust(const CFeeRate &minRelayTxFee) const
+    {
+        return false;
+    }
+
+    bool IsDustOriginal(const CFeeRate &minRelayTxFee) const
     {
         return (nValue < GetDustThreshold(minRelayTxFee));
     }

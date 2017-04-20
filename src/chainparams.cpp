@@ -101,8 +101,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 1479168000; // November 15th, 2016.
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 1510704000; // November 15th, 2017.
 
+        // NEW: change the minimum work required to mine (same value as in regtest)
         // The best chain should have at least this much work.
-        //consensus.nMinimumChainWork = uint256S("0x00");
+        // consensus.nMinimumChainWork = uint256S("0x00");
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000003f94d1ad391682fe038bf5");
 
         // By default assume that the signatures in ancestors of this block are valid.

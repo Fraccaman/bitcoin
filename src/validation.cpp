@@ -1163,7 +1163,13 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
     return true;
 }
 
+// NEW: due to problem with coinbase lets make it 50 forever
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
+{
+    return 50 * COIN;;
+}
+
+CAmount GetBlockSubsidyOriginal(int nHeight, const Consensus::Params& consensusParams)
 {
     int halvings = nHeight / consensusParams.nSubsidyHalvingInterval;
     // Force block reward to zero when right shift is undefined.
