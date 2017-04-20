@@ -103,8 +103,8 @@ public:
 
         // NEW: change the minimum work required to mine (same value as in regtest)
         // The best chain should have at least this much work.
-        // consensus.nMinimumChainWork = uint256S("0x00");
-        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000003f94d1ad391682fe038bf5");
+        // consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000003f94d1ad391682fe038bf5");
+        consensus.nMinimumChainWork = uint256S("0x00");
 
         // By default assume that the signatures in ancestors of this block are valid.
         // consensus.defaultAssumeValid = uint256S("0x00");

@@ -123,9 +123,8 @@ bool DecodeHexTx(CMutableTransaction& tx, const std::string& strHexTx, bool fTry
 
 bool DecodeHexBlk(CBlock& block, const std::string& strHexBlk)
 {
-    if (!IsHex(strHexBlk)) {
+    if (!IsHex(strHexBlk))
         return false;
-    }
 
     std::vector<unsigned char> blockData(ParseHex(strHexBlk));
     CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION);
