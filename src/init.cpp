@@ -1002,10 +1002,11 @@ bool AppInitParameterInteraction()
     // a transaction spammer can cheaply fill blocks using
     // 1-satoshi-fee transactions. It should be set above the real
     // cost to you of processing a transaction.
+    //NEW: -minrelaytxfee can also be 0
     if (IsArgSet("-minrelaytxfee"))
     {
         CAmount n = 0;
-        if (!ParseMoney(GetArg("-minrelaytxfee", ""), n) || 0 == n)
+        if (!ParseMoney(GetArg("-minrelaytxfee", ""), n))
             return InitError(AmountErrMsg("minrelaytxfee", GetArg("-minrelaytxfee", "")));
         // High fee check is done afterward in CWallet::ParameterInteraction()
         ::minRelayTxFee = CFeeRate(n);
