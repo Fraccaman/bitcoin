@@ -570,8 +570,10 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     map<uint256, int64_t> setTxIndex;
     int i = 0;
     for (const auto& it : pblock->vtx) {
+        // LogPrintf("Tx Number(): sigops %d\n", i);
         const CTransaction& tx = *it;
         uint256 txHash = tx.GetHash();
+        // LogPrintf("Tx Hash(): %s\n", txHash.ToString().c_str());
         setTxIndex[txHash] = i++;
 
         if (tx.IsCoinBase())

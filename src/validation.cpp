@@ -795,9 +795,9 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
         size_t nLimitDescendantSize = GetArg("-limitdescendantsize", DEFAULT_DESCENDANT_SIZE_LIMIT)*1000;
         std::string errString;
         // NEW: allow infinite ancestor into mempool
-        // if (!pool.CalculateMemPoolAncestors(entry, setAncestors, nLimitAncestors, nLimitAncestorSize, nLimitDescendants, nLimitDescendantSize, errString)) {
-        //     return state.DoS(0, false, REJECT_NONSTANDARD, "too-long-mempool-chain", false, errString);
-        // }
+        if (!pool.CalculateMemPoolAncestors(entry, setAncestors, nLimitAncestors, nLimitAncestorSize, nLimitDescendants, nLimitDescendantSize, errString)) {
+            return state.DoS(0, false, REJECT_NONSTANDARD, "too-long-mempool-chain", false, errString);
+        }
 
         // A transaction that spends outputs that would be replaced by it is invalid. Now
         // that we have the set of all ancestors we can detect this

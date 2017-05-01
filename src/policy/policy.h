@@ -23,10 +23,12 @@ static const unsigned int DEFAULT_BLOCK_MAX_WEIGHT = 3000000;
 /** Default for -blockmintxfee, which sets the minimum feerate for a transaction in blocks created by mining code **/
 static const unsigned int DEFAULT_BLOCK_MIN_TX_FEE = 1000;
 /** The maximum weight for transactions we're willing to relay/mine */
-static const unsigned int MAX_STANDARD_TX_WEIGHT = 400000;
+// NEW: changed the max tx weight 
+static const unsigned int MAX_STANDARD_TX_WEIGHT = 900000;
 /** Maximum number of signature check operations in an IsStandard() P2SH script */
-static const unsigned int MAX_P2SH_SIGOPS = 15;
-/** The maximum number of sigops we're willing to relay/mine in a single tx */
+static const unsigned int MAX_P2SH_SIGOPS = 10000;
+/** The maximum number of sigops we're willing to relay/mine in a single tx */ 
+// NEW: change the cost of sig ops per tx
 static const unsigned int MAX_STANDARD_TX_SIGOPS_COST = MAX_BLOCK_SIGOPS_COST/5;
 /** Default for -maxmempool, maximum megabytes of mempool memory usage */
 static const unsigned int DEFAULT_MAX_MEMPOOL_SIZE = 300;
