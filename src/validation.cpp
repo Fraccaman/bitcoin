@@ -1886,6 +1886,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     for (unsigned int i = 0; i < block.vtx.size(); i++)
     {
         const CTransaction &tx = *(block.vtx[i]);
+        
+        if (tx.IsCoinBase()) {
+            LogPrintf("ConnectBlock - coinbase: %s\n", tx.ToString().c_str());
+        }
 
         nInputs += tx.vin.size();
 
@@ -1990,7 +1994,9 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     // Watch for changes to the previous coinbase transaction.
     static uint256 hashPrevBestCoinBase;
     GetMainSignals().UpdatedTransaction(hashPrevBestCoinBase);
+    LogPrintf("Tx Coinbase Test: %s\n", block.vtx[0]->GetHash().ToString().c_str());          
     hashPrevBestCoinBase = block.vtx[0]->GetHash();
+    // hashPrevBestCoinBase = uint256('01a19a491782446db0fd11248f1AAA71bdd5c72df7d17619f3f716c0508286a1');
 
 
     int64_t nTime6 = GetTimeMicros(); nTimeCallbacks += nTime6 - nTime5;
@@ -2809,7 +2815,7 @@ bool FindBlockPos(CValidationState &state, CDiskBlockPos &pos, unsigned int nAdd
     return true;
 }
 
-bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize)
+bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize) 
 {
     pos.nFile = nFile;
 
@@ -2852,6 +2858,11 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const 
 // NEW: we don't need to check if blocks are valid, since we assume it
 bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot)
 {
+    if (block.vtx[0]->IsCoinBase()) {
+        const pid_t myPid = getpid();
+        LogPrintf("CheckBlock - mypid: %ld: Coinbase Hash: %s\n", myPid, block.vtx[0]->GetHash().ToString().c_str());
+    }
+  
     return true;
 }
 
@@ -3256,12 +3267,14 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
         CValidationState state;
         // Ensure that CheckBlock() passes before calling AcceptBlock, as
         // belt-and-suspenders.
+        LogPrintf("ProcessNewBlock - CheckBlock\n");
         bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus());
 
         LOCK(cs_main);
 
         if (ret) {
             // Store to disk
+            LogPrintf("ProcessNewBlock - AcceptBlock");
             ret = AcceptBlock(pblock, state, chainparams, &pindex, fForceProcessing, NULL, fNewBlock);
         }
         CheckBlockIndex(chainparams.GetConsensus());
@@ -3627,8 +3640,13 @@ CVerifyDB::~CVerifyDB()
     uiInterface.ShowProgress("", 100);
 }
 
+
+// New: blabla
 bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview, int nCheckLevel, int nCheckDepth)
 {
+    
+    return true;
+  
     LOCK(cs_main);
     if (chainActive.Tip() == NULL || chainActive.Tip()->pprev == NULL)
         return true;

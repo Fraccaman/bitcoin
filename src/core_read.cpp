@@ -2,6 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <iostream>
+#include <fstream>
 #include "core_io.h"
 
 #include "primitives/block.h"
@@ -123,17 +125,27 @@ bool DecodeHexTx(CMutableTransaction& tx, const std::string& strHexTx, bool fTry
 
 bool DecodeHexBlk(CBlock& block, const std::string& strHexBlk)
 {
+    std::ofstream myfile;
     if (!IsHex(strHexBlk))
         return false;
 
     std::vector<unsigned char> blockData(ParseHex(strHexBlk));
+    
     CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION);
     try {
         ssBlock >> block;
     }
-    catch (const std::exception&) {
+    catch (const std::exception &ex) {
+        myfile.open("ads.txt", std::ios_base::app);
+        myfile << "Exception! " << ex.what() << std::endl;
+        myfile.close();
+
         return false;
     }
+    
+    myfile.open("ads.txt", std::ios_base::app);
+    myfile << "finshed ssBlock" << std::endl;
+    myfile.close();
 
     return true;
 }

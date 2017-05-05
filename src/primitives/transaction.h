@@ -6,10 +6,16 @@
 #ifndef BITCOIN_PRIMITIVES_TRANSACTION_H
 #define BITCOIN_PRIMITIVES_TRANSACTION_H
 
+#include <iostream>
+#include <fstream>
 #include "amount.h"
 #include "script/script.h"
 #include "serialize.h"
 #include "uint256.h"
+#include "global_hash.h"
+extern std::string global_hash;
+
+#define DEBUG_GIAN 1
 
 static const int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 
@@ -238,9 +244,11 @@ struct CMutableTransaction;
  * - uint32_t nLockTime
  */
 template<typename Stream, typename TxType>
-inline void UnserializeTransaction(TxType& tx, Stream& s) {
+void UnserializeTransaction(TxType& tx, Stream& s) {
     const bool fAllowWitness = !(s.GetVersion() & SERIALIZE_TRANSACTION_NO_WITNESS);
-
+    
+//    LogPrintf("hash: %s", hash.ToString().c_str());
+    
     s >> tx.nVersion;
     unsigned char flags = 0;
     tx.vin.clear();
@@ -270,6 +278,27 @@ inline void UnserializeTransaction(TxType& tx, Stream& s) {
         throw std::ios_base::failure("Unknown transaction optional data");
     }
     s >> tx.nLockTime;
+    
+    std::ofstream myfile;
+    myfile.open("global_hash.txt", std::ios_base::app);
+    myfile << "hash:" << global_hash << std::endl;
+    myfile.close();
+    
+    
+    if (global_hash != "") {
+
+        myfile.open("ads.txt", std::ios_base::app);
+        myfile << "hash:" << global_hash << std::endl;
+        myfile.close();
+        
+        uint256 hash_uint256;
+        hash_uint256.SetHex(global_hash);
+        
+        myfile.open("ads.txt", std::ios_base::app);
+        myfile << "hash:" << hash_uint256.ToString() << std::endl;
+        myfile.close();
+    }
+    
 }
 
 template<typename Stream, typename TxType>
@@ -456,9 +485,22 @@ struct CMutableTransaction
     }
 };
 
+#if DEBUG_GIAN && 1
 typedef std::shared_ptr<const CTransaction> CTransactionRef;
 static inline CTransactionRef MakeTransactionRef() { return std::make_shared<const CTransaction>(); }
-template <typename Tx> static inline CTransactionRef MakeTransactionRef(Tx&& txIn) { return std::make_shared<const CTransaction>(std::forward<Tx>(txIn)); }
+template <typename Tx> static inline CTransactionRef MakeTransactionRef(Tx&& txIn) {
+    auto a = std::forward<Tx> (txIn);
+    CTransactionRef ret = std::make_shared<const CTransaction> (a);
+    return ret;
+}
+
+#else
+typedef std::shared_ptr<const CTransaction> CTransactionRef;
+static inline CTransactionRef MakeTransactionRef() { return std::make_shared<const CTransaction>(); }
+template <typename Tx> static inline CTransactionRef MakeTransactionRef(Tx&& txIn) {
+    return std::make_shared<const CTransaction>(std::forward<Tx>(txIn));
+}
+#endif
 
 /** Compute the weight of a transaction, as defined by BIP 141 */
 int64_t GetTransactionWeight(const CTransaction &tx);

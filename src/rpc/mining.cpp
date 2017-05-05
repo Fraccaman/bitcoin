@@ -21,6 +21,8 @@
 #include "util.h"
 #include "utilstrencodings.h"
 #include "validationinterface.h"
+#include "global_hash.h"
+
 
 #include <memory>
 #include <stdint.h>
@@ -575,9 +577,14 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         uint256 txHash = tx.GetHash();
         // LogPrintf("Tx Hash(): %s\n", txHash.ToString().c_str());
         setTxIndex[txHash] = i++;
-
-        if (tx.IsCoinBase())
+        // LogPrintf("Tx Number %d\n", i);
+          
+        if (tx.IsCoinBase()) {
+            // LogPrintf("Tx Coinbase Test: %s\n", tx.ToString().c_str());          
             continue;
+        }
+        
+        LogPrintf("Tx Test: %s\n", tx.ToString().c_str());
 
         UniValue entry(UniValue::VOBJ);
 
@@ -673,6 +680,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         // Note that this can probably also be removed entirely after the first BIP9 non-force deployment (ie, probably segwit) gets activated
         aMutable.push_back("version/force");
     }
+    
+    // LogPrintf("Txs Length %d\n", transactions.size());
 
     result.push_back(Pair("previousblockhash", pblock->hashPrevBlock.GetHex()));
     result.push_back(Pair("transactions", transactions));
@@ -747,6 +756,7 @@ UniValue submitblock(const JSONRPCRequest& request)
 
     std::shared_ptr<CBlock> blockptr = std::make_shared<CBlock>();
     CBlock& block = *blockptr;
+    GLOBAL_HASH::global_hash = "asdasdasada";
     if (!DecodeHexBlk(block, request.params[0].get_str()))
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
 
@@ -776,6 +786,7 @@ UniValue submitblock(const JSONRPCRequest& request)
 
     submitblock_StateCatcher sc(block.GetHash());
     RegisterValidationInterface(&sc);
+    LogPrintf("Submitblock - ProcessNewBlock");
     bool fAccepted = ProcessNewBlock(Params(), blockptr, true, NULL);
     UnregisterValidationInterface(&sc);
     if (fBlockPresent)
