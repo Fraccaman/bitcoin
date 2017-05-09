@@ -601,8 +601,8 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
     // Only accept nLockTime-using transactions that can be mined in the next
     // block; we don't want our mempool filled up with transactions that can't
     // be mined yet.
-    if (!CheckFinalTx(tx, STANDARD_LOCKTIME_VERIFY_FLAGS))
-        return state.DoS(0, false, REJECT_NONSTANDARD, "non-final");
+    // if (!CheckFinalTx(tx, STANDARD_LOCKTIME_VERIFY_FLAGS))
+    //     return state.DoS(0, false, REJECT_NONSTANDARD, "non-final");
 
     // is it already in the memory pool?
     if (pool.exists(hash))
@@ -2858,10 +2858,7 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const 
 // NEW: we don't need to check if blocks are valid, since we assume it
 bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot)
 {
-    if (block.vtx[0]->IsCoinBase()) {
-        const pid_t myPid = getpid();
-        LogPrintf("CheckBlock - mypid: %ld: Coinbase Hash: %s\n", myPid, block.vtx[0]->GetHash().ToString().c_str());
-    }
+    LogPrintf("Block Hash: %s\n", block.GetHash().ToString());
   
     return true;
 }
@@ -3267,14 +3264,12 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
         CValidationState state;
         // Ensure that CheckBlock() passes before calling AcceptBlock, as
         // belt-and-suspenders.
-        LogPrintf("ProcessNewBlock - CheckBlock\n");
         bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus());
 
         LOCK(cs_main);
 
         if (ret) {
             // Store to disk
-            LogPrintf("ProcessNewBlock - AcceptBlock");
             ret = AcceptBlock(pblock, state, chainparams, &pindex, fForceProcessing, NULL, fNewBlock);
         }
         CheckBlockIndex(chainparams.GetConsensus());

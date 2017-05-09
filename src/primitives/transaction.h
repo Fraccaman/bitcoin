@@ -12,10 +12,6 @@
 #include "script/script.h"
 #include "serialize.h"
 #include "uint256.h"
-#include "global_hash.h"
-extern std::string global_hash;
-
-#define DEBUG_GIAN 1
 
 static const int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 
@@ -246,9 +242,7 @@ struct CMutableTransaction;
 template<typename Stream, typename TxType>
 void UnserializeTransaction(TxType& tx, Stream& s) {
     const bool fAllowWitness = !(s.GetVersion() & SERIALIZE_TRANSACTION_NO_WITNESS);
-    
-//    LogPrintf("hash: %s", hash.ToString().c_str());
-    
+        
     s >> tx.nVersion;
     unsigned char flags = 0;
     tx.vin.clear();
@@ -278,27 +272,7 @@ void UnserializeTransaction(TxType& tx, Stream& s) {
         throw std::ios_base::failure("Unknown transaction optional data");
     }
     s >> tx.nLockTime;
-    
-    std::ofstream myfile;
-    myfile.open("global_hash.txt", std::ios_base::app);
-    myfile << "hash:" << global_hash << std::endl;
-    myfile.close();
-    
-    
-    if (global_hash != "") {
-
-        myfile.open("ads.txt", std::ios_base::app);
-        myfile << "hash:" << global_hash << std::endl;
-        myfile.close();
         
-        uint256 hash_uint256;
-        hash_uint256.SetHex(global_hash);
-        
-        myfile.open("ads.txt", std::ios_base::app);
-        myfile << "hash:" << hash_uint256.ToString() << std::endl;
-        myfile.close();
-    }
-    
 }
 
 template<typename Stream, typename TxType>

@@ -21,7 +21,6 @@
 #include "util.h"
 #include "utilstrencodings.h"
 #include "validationinterface.h"
-#include "global_hash.h"
 
 
 #include <memory>
@@ -404,6 +403,10 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     int64_t nMaxVersionPreVB = -1;
     if (request.params.size() > 0)
     {
+        // if(request.params[0].isNum()) {
+        //   uint64_t size = (request.params[0].get_int64());
+        //   nBlockMaxSize = size;
+        // } else {
         const UniValue& oparam = request.params[0].get_obj();
         const UniValue& modeval = find_value(oparam, "mode");
         if (modeval.isStr())
@@ -459,6 +462,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                 nMaxVersionPreVB = uvMaxVersion.get_int64();
             }
         }
+      // }
     }
 
     if (strMode != "template")
@@ -583,8 +587,6 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             // LogPrintf("Tx Coinbase Test: %s\n", tx.ToString().c_str());          
             continue;
         }
-        
-        LogPrintf("Tx Test: %s\n", tx.ToString().c_str());
 
         UniValue entry(UniValue::VOBJ);
 
@@ -756,7 +758,7 @@ UniValue submitblock(const JSONRPCRequest& request)
 
     std::shared_ptr<CBlock> blockptr = std::make_shared<CBlock>();
     CBlock& block = *blockptr;
-    GLOBAL_HASH::global_hash = "asdasdasada";
+    
     if (!DecodeHexBlk(block, request.params[0].get_str()))
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
 
@@ -786,7 +788,6 @@ UniValue submitblock(const JSONRPCRequest& request)
 
     submitblock_StateCatcher sc(block.GetHash());
     RegisterValidationInterface(&sc);
-    LogPrintf("Submitblock - ProcessNewBlock");
     bool fAccepted = ProcessNewBlock(Params(), blockptr, true, NULL);
     UnregisterValidationInterface(&sc);
     if (fBlockPresent)
