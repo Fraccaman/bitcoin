@@ -21,6 +21,7 @@
 #include "util.h"
 #include "utilstrencodings.h"
 #include "validationinterface.h"
+#include "../policy/policy.h"
 
 
 #include <memory>
@@ -401,12 +402,15 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     UniValue lpval = NullUniValue;
     std::set<std::string> setClientRules;
     int64_t nMaxVersionPreVB = -1;
+    
+    uint64_t block_size = DEFAULT_BLOCK_MAX_SIZE;
+    
     if (request.params.size() > 0)
     {
-        // if(request.params[0].isNum()) {
-        //   uint64_t size = (request.params[0].get_int64());
-        //   nBlockMaxSize = size;
-        // } else {
+        if(request.params[0].isNum()) {
+          LogPrintf("Testing size request %d\n", request.params[0].get_int64());
+          block_size = request.params[0].get_int64();
+        } else {
         const UniValue& oparam = request.params[0].get_obj();
         const UniValue& modeval = find_value(oparam, "mode");
         if (modeval.isStr())
@@ -462,7 +466,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                 nMaxVersionPreVB = uvMaxVersion.get_int64();
             }
         }
-      // }
+      }
     }
 
     if (strMode != "template")
@@ -540,7 +544,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     static bool fLastTemplateSupportsSegwit = true;
     if (pindexPrev != chainActive.Tip() ||
         (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 5) ||
-        fLastTemplateSupportsSegwit != fSupportsSegwit)
+        fLastTemplateSupportsSegwit != fSupportsSegwit || true )
     {
         // Clear pindexPrev so future calls make a new block, despite any failures from here on
         pindexPrev = nullptr;
@@ -553,7 +557,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         // Create new block
         CScript scriptDummy = CScript() << OP_TRUE;
-        pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
+        pblocktemplate = BlockAssembler(Params(), block_size).CreateNewBlock(scriptDummy, fSupportsSegwit);
         if (!pblocktemplate)
             throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
 
@@ -576,17 +580,9 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     map<uint256, int64_t> setTxIndex;
     int i = 0;
     for (const auto& it : pblock->vtx) {
-        // LogPrintf("Tx Number(): sigops %d\n", i);
         const CTransaction& tx = *it;
         uint256 txHash = tx.GetHash();
-        // LogPrintf("Tx Hash(): %s\n", txHash.ToString().c_str());
         setTxIndex[txHash] = i++;
-        // LogPrintf("Tx Number %d\n", i);
-          
-        if (tx.IsCoinBase()) {
-            // LogPrintf("Tx Coinbase Test: %s\n", tx.ToString().c_str());          
-            continue;
-        }
 
         UniValue entry(UniValue::VOBJ);
 
@@ -604,9 +600,9 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         int index_in_template = i - 1;
         entry.push_back(Pair("fee", pblocktemplate->vTxFees[index_in_template]));
-        int64_t nTxSigOps = pblocktemplate->vTxSigOpsCost[index_in_template];
+        int64_t nTxSigOps = pblocktemplate->vTxSigOpsCost[index_in_template] - 2;
         if (fPreSegWit) {
-            assert(nTxSigOps % WITNESS_SCALE_FACTOR == 0);
+//            assert(nTxSigOps % WITNESS_SCALE_FACTOR == 0);
             nTxSigOps /= WITNESS_SCALE_FACTOR;
         }
         entry.push_back(Pair("sigops", nTxSigOps));

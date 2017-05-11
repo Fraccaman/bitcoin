@@ -265,6 +265,7 @@ unsigned int CCoinsViewCache::GetCacheSize() const {
 const CTxOut &CCoinsViewCache::GetOutputFor(const CTxIn& input) const
 {
     const CCoins* coins = AccessCoins(input.prevout.hash);
+    // TODO: if (!coins || !coins->IsAvailable(input.prevout.n) do smth due to a missing input
     assert(coins && coins->IsAvailable(input.prevout.n));
     return coins->vout[input.prevout.n];
 }
@@ -275,8 +276,16 @@ CAmount CCoinsViewCache::GetValueIn(const CTransaction& tx) const
         return 0;
 
     CAmount nResult = 0;
-    for (unsigned int i = 0; i < tx.vin.size(); i++)
-        nResult += GetOutputFor(tx.vin[i]).nValue;
+    for (unsigned int i = 0; i < tx.vin.size(); i++) {
+        
+        if (!AccessCoins(tx.vin[i].prevout.hash)) {
+            CAmount nValueOut = tx.GetValueOut();
+            nValueOut += 100000ULL;
+            nResult += nValueOut;
+        } else {
+            nResult += GetOutputFor(tx.vin[i]).nValue;
+        }
+    }
 
     return nResult;
 }
@@ -304,6 +313,7 @@ double CCoinsViewCache::GetPriority(const CTransaction &tx, int nHeight, CAmount
     BOOST_FOREACH(const CTxIn& txin, tx.vin)
     {
         const CCoins* coins = AccessCoins(txin.prevout.hash);
+        if(!coins) continue;
         assert(coins);
         if (!coins->IsAvailable(txin.prevout.n)) continue;
         if (coins->nHeight <= nHeight) {

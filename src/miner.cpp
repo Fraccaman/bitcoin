@@ -93,6 +93,10 @@ BlockAssembler::BlockAssembler(const CChainParams& _chainparams)
             nBlockMaxWeight = nBlockMaxSize * WITNESS_SCALE_FACTOR;
         }
     }
+    
+    if (!fWeightSet) {
+        nBlockMaxWeight = nBlockMaxSize * WITNESS_SCALE_FACTOR;
+    }
     if (IsArgSet("-blockmintxfee")) {
         CAmount n = 0;
         ParseMoney(GetArg("-blockmintxfee", ""), n);
@@ -105,6 +109,52 @@ BlockAssembler::BlockAssembler(const CChainParams& _chainparams)
     nBlockMaxWeight = std::max((unsigned int)4000, std::min((unsigned int)(MAX_BLOCK_WEIGHT-4000), nBlockMaxWeight));
     // Limit size to between 1K and MAX_BLOCK_SERIALIZED_SIZE-1K for sanity:
     nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MAX_BLOCK_SERIALIZED_SIZE-1000), nBlockMaxSize));
+    // Whether we need to account for byte usage (in addition to weight usage)
+    fNeedSizeAccounting = (nBlockMaxSize < MAX_BLOCK_SERIALIZED_SIZE-1000);
+}
+
+BlockAssembler::BlockAssembler(const CChainParams& _chainparams, uint64_t block_size)
+    : chainparams(_chainparams)
+{
+  
+    LogPrintf("DEBUG SIZE first %s\n", std::to_string(nBlockMaxSize));
+    
+    // Block resource limits
+    // If neither -blockmaxsize or -blockmaxweight is given, limit to DEFAULT_BLOCK_MAX_*
+    // If only one is given, only restrict the specified resource.
+    // If both are given, restrict both.
+    nBlockMaxWeight = DEFAULT_BLOCK_MAX_WEIGHT;
+    nBlockMaxSize = DEFAULT_BLOCK_MAX_SIZE;
+    bool fWeightSet = false;
+    if (IsArgSet("-blockmaxweight")) {
+        nBlockMaxWeight = GetArg("-blockmaxweight", DEFAULT_BLOCK_MAX_WEIGHT);
+        nBlockMaxSize = MAX_BLOCK_SERIALIZED_SIZE;
+        fWeightSet = true;
+    }
+    
+    nBlockMaxSize = block_size;
+    if (!fWeightSet) {
+        nBlockMaxWeight = nBlockMaxSize * WITNESS_SCALE_FACTOR;
+    }
+    
+    if (!fWeightSet) {
+        nBlockMaxWeight = nBlockMaxSize * WITNESS_SCALE_FACTOR;
+    }
+    if (IsArgSet("-blockmintxfee")) {
+        CAmount n = 0;
+        ParseMoney(GetArg("-blockmintxfee", ""), n);
+        blockMinFeeRate = CFeeRate(n);
+    } else {
+        blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);
+    }
+
+    // Limit weight to between 4K and MAX_BLOCK_WEIGHT-4K for sanity:
+    nBlockMaxWeight = std::max((unsigned int)4000, std::min((unsigned int)(MAX_BLOCK_WEIGHT-4000), nBlockMaxWeight));
+    // Limit size to between 1K and MAX_BLOCK_SERIALIZED_SIZE-1K for sanity:
+//    nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MAX_BLOCK_SERIALIZED_SIZE-1000), nBlockMaxSize));
+    
+    LogPrintf("DEBUG SIZE last %s\n", std::to_string(nBlockMaxSize));
+    
     // Whether we need to account for byte usage (in addition to weight usage)
     fNeedSizeAccounting = (nBlockMaxSize < MAX_BLOCK_SERIALIZED_SIZE-1000);
 }

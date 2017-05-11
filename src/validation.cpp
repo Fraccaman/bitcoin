@@ -368,6 +368,8 @@ bool TestLockPointValidity(const LockPoints* lp)
 
 bool CheckSequenceLocks(const CTransaction &tx, int flags, LockPoints* lp, bool useExistingLockPoints)
 {
+    return true;
+    
     AssertLockHeld(cs_main);
     AssertLockHeld(mempool.cs);
 
@@ -459,9 +461,13 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& in
     unsigned int nSigOps = 0;
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
-        const CTxOut &prevout = inputs.GetOutputFor(tx.vin[i]);
-        if (prevout.scriptPubKey.IsPayToScriptHash())
-            nSigOps += prevout.scriptPubKey.GetSigOpCount(tx.vin[i].scriptSig);
+        if (!inputs.AccessCoins(tx.vin[i].prevout.hash)) {
+            nSigOps += 1LL;
+        } else {
+            const CTxOut &prevout = inputs.GetOutputFor(tx.vin[i]);
+            if (prevout.scriptPubKey.IsPayToScriptHash())
+                nSigOps += prevout.scriptPubKey.GetSigOpCount(tx.vin[i].scriptSig);
+        }
     }
     return nSigOps;
 }
@@ -479,8 +485,12 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
 
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
-        const CTxOut &prevout = inputs.GetOutputFor(tx.vin[i]);
-        nSigOps += CountWitnessSigOps(tx.vin[i].scriptSig, prevout.scriptPubKey, &tx.vin[i].scriptWitness, flags);
+        if (!inputs.AccessCoins(tx.vin[i].prevout.hash)) {
+            nSigOps += 1LL;
+        } else {
+            const CTxOut &prevout = inputs.GetOutputFor(tx.vin[i]);
+            nSigOps += CountWitnessSigOps(tx.vin[i].scriptSig, prevout.scriptPubKey, &tx.vin[i].scriptWitness, flags);
+        }
     }
     return nSigOps;
 }
@@ -586,6 +596,7 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
     // Coinbase is only valid in a block, not as a loose transaction
     if (tx.IsCoinBase())
         return state.DoS(100, false, REJECT_INVALID, "coinbase");
+    
 
     // Reject transactions with witness before segregated witness activates (override with -prematurewitness)
     bool witnessEnabled = IsWitnessEnabled(chainActive.Tip(), Params().GetConsensus());
@@ -680,14 +691,14 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
                 vHashTxnToUncache.push_back(txin.prevout.hash);
             if (!view.HaveCoins(txin.prevout.hash)) {
                 if (pfMissingInputs)
-                    *pfMissingInputs = true;
-                return false; // fMissingInputs and !state.IsInvalid() is used to detect this condition, don't set state.Invalid()
+                    *pfMissingInputs = false;
+                // return false; // fMissingInputs and !state.IsInvalid() is used to detect this condition, don't set state.Invalid()
             }
         }
 
         // are the actual inputs available?
-        if (!view.HaveInputs(tx))
-            return state.Invalid(false, REJECT_DUPLICATE, "bad-txns-inputs-spent");
+//        if (!view.HaveInputs(tx))
+//            return state.Invalid(false, REJECT_DUPLICATE, "bad-txns-inputs-spent");
 
         // Bring the best block into scope
         view.GetBestBlock();
@@ -707,12 +718,12 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
         }
 
         // Check for non-standard pay-to-script-hash in inputs
-        if (fRequireStandard && !AreInputsStandard(tx, view))
-            return state.Invalid(false, REJECT_NONSTANDARD, "bad-txns-nonstandard-inputs");
+//        if (fRequireStandard && !AreInputsStandard(tx, view))
+//            return state.Invalid(false, REJECT_NONSTANDARD, "bad-txns-nonstandard-inputs");
 
         // Check for non-standard witness in P2WSH
-        if (tx.HasWitness() && fRequireStandard && !IsWitnessStandard(tx, view))
-            return state.DoS(0, false, REJECT_NONSTANDARD, "bad-witness-nonstandard", true);
+//        if (tx.HasWitness() && fRequireStandard && !IsWitnessStandard(tx, view))
+//            return state.DoS(0, false, REJECT_NONSTANDARD, "bad-witness-nonstandard", true);
 
         int64_t nSigOpsCost = GetTransactionSigOpCost(tx, view, STANDARD_SCRIPT_VERIFY_FLAGS);
 
@@ -731,7 +742,7 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
         bool fSpendsCoinbase = false;
         BOOST_FOREACH(const CTxIn &txin, tx.vin) {
             const CCoins *coins = view.AccessCoins(txin.prevout.hash);
-            if (coins->IsCoinBase()) {
+            if (false && coins->IsCoinBase()) {
                 fSpendsCoinbase = true;
                 break;
             }
@@ -794,7 +805,6 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
         size_t nLimitDescendants = GetArg("-limitdescendantcount", DEFAULT_DESCENDANT_LIMIT);
         size_t nLimitDescendantSize = GetArg("-limitdescendantsize", DEFAULT_DESCENDANT_SIZE_LIMIT)*1000;
         std::string errString;
-        // NEW: allow infinite ancestor into mempool
         if (!pool.CalculateMemPoolAncestors(entry, setAncestors, nLimitAncestors, nLimitAncestorSize, nLimitDescendants, nLimitDescendantSize, errString)) {
             return state.DoS(0, false, REJECT_NONSTANDARD, "too-long-mempool-chain", false, errString);
         }
@@ -1388,8 +1398,13 @@ bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoins
 {
         // This doesn't trigger the DoS code on purpose; if it did, it would make it easier
         // for an attacker to attempt to split the network.
+    
+    
+    
+    
         if (!inputs.HaveInputs(tx))
-            return state.Invalid(false, 0, "", "Inputs unavailable");
+            return true;
+//            return state.Invalid(false, 0, "", "Inputs unavailable");
 
         CAmount nValueIn = 0;
         CAmount nFees = 0;
@@ -1452,6 +1467,8 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
             for (unsigned int i = 0; i < tx.vin.size(); i++) {
                 const COutPoint &prevout = tx.vin[i].prevout;
                 const CCoins* coins = inputs.AccessCoins(prevout.hash);
+                if(!coins) continue;
+                    
                 assert(coins);
 
                 // Verify signature
@@ -1896,8 +1913,9 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         if (!tx.IsCoinBase())
         {
             if (!view.HaveInputs(tx))
-                return state.DoS(100, error("ConnectBlock(): inputs missing/spent"),
-                                 REJECT_INVALID, "bad-txns-inputs-missingorspent");
+                continue;
+//                return state.DoS(100, error("ConnectBlock(): inputs missing/spent"),
+//                                 REJECT_INVALID, "bad-txns-inputs-missingorspent");
 
             // Check that transaction is BIP68 final
             // BIP68 lock checks (as opposed to nLockTime checks) must
@@ -1948,11 +1966,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     LogPrint("bench", "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs]\n", (unsigned)block.vtx.size(), 0.001 * (nTime3 - nTime2), 0.001 * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : 0.001 * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * 0.000001);
 
     CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
-    if (block.vtx[0]->GetValueOut() > blockReward)
-        return state.DoS(100,
-                         error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)",
-                               block.vtx[0]->GetValueOut(), blockReward),
-                               REJECT_INVALID, "bad-cb-amount");
+//    if (block.vtx[0]->GetValueOut() > blockReward)
+//        return state.DoS(100,
+//                         error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)",
+//                               block.vtx[0]->GetValueOut(), blockReward),
+//                               REJECT_INVALID, "bad-cb-amount");
 
     if (!control.Wait())
         return state.DoS(100, false);
@@ -2858,7 +2876,7 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const 
 // NEW: we don't need to check if blocks are valid, since we assume it
 bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot)
 {
-    LogPrintf("Block Hash: %s\n", block.GetHash().ToString());
+//    LogPrintf("Block Hash: %s\n", block.GetHash().ToString());
   
     return true;
 }

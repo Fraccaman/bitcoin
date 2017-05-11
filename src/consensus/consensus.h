@@ -18,7 +18,7 @@ static const unsigned int MAX_BLOCK_BASE_SIZE = 1000000;
 // NEW: change the max number sigops cost 
 static const int64_t MAX_BLOCK_SIGOPS_COST = 1000000000;
 /** Coinbase transaction outputs can only be spent after this number of new blocks (network rule) */
-static const int COINBASE_MATURITY = 100;
+static const int COINBASE_MATURITY = 0;
 
 /** Flags for nSequence and nLockTime locks */
 enum {

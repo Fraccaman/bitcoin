@@ -43,7 +43,7 @@ public:
     }
 
     inline int Compare(const base_blob& other) const { return memcmp(data, other.data, sizeof(data)); }
-
+    
     friend inline bool operator==(const base_blob& a, const base_blob& b) { return a.Compare(b) == 0; }
     friend inline bool operator!=(const base_blob& a, const base_blob& b) { return a.Compare(b) != 0; }
     friend inline bool operator<(const base_blob& a, const base_blob& b) { return a.Compare(b) < 0; }

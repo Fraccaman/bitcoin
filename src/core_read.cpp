@@ -10,11 +10,12 @@
 #include "primitives/transaction.h"
 #include "script/script.h"
 #include "serialize.h"
-#include "streams.h"
+#include "streams.h" 
 #include <univalue.h>
 #include "util.h"
 #include "utilstrencodings.h"
 #include "version.h"
+#include "syslog.h"
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -130,22 +131,27 @@ bool DecodeHexBlk(CBlock& block, const std::string& strHexBlk)
         return false;
 
     std::vector<unsigned char> blockData(ParseHex(strHexBlk));
-    
+    // syslog(LOG_ERROR,dbgs.c_str());
+//    myfile.open("ads.txt", std::ios_base::app);
+//    std::string dbgs;
+//    for (int idx = 0; idx < blockData.size(); idx++)
+//      dbgs += blockData[idx];
+//    myfile << dbgs << std::endl;
+//    myfile.close();
     CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION);
     try {
         ssBlock >> block;
     }
     catch (const std::exception &ex) {
-        myfile.open("ads.txt", std::ios_base::app);
-        myfile << "Exception! " << ex.what() << std::endl;
-        myfile.close();
-
+//        myfile.open("ads.txt", std::ios_base::app);
+//        myfile << "Exception! " << ex.what() << std::endl;
+//        myfile.close();
         return false;
     }
     
-    myfile.open("ads.txt", std::ios_base::app);
-    myfile << "finshed ssBlock" << std::endl;
-    myfile.close();
+//    myfile.open("ads.txt", std::ios_base::app);
+//    myfile << "finshed ssBlock" << std::endl;
+//    myfile.close();
 
     return true;
 }
