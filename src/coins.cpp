@@ -266,7 +266,8 @@ const CTxOut &CCoinsViewCache::GetOutputFor(const CTxIn& input) const
 {
     const CCoins* coins = AccessCoins(input.prevout.hash);
     // TODO: if (!coins || !coins->IsAvailable(input.prevout.n) do smth due to a missing input
-    assert(coins && coins->IsAvailable(input.prevout.n));
+    assert(coins);
+    assert(coins->IsAvailable(input.prevout.n));
     return coins->vout[input.prevout.n];
 }
 
@@ -281,7 +282,13 @@ CAmount CCoinsViewCache::GetValueIn(const CTransaction& tx) const
         if (!AccessCoins(tx.vin[i].prevout.hash)) {
             CAmount nValueOut = tx.GetValueOut();
             nValueOut += 100000ULL;
-            nResult += nValueOut;
+            nResult = nValueOut;
+            return nResult;
+        } else if (!AccessCoins(tx.vin[i].prevout.hash)->IsAvailable(tx.vin[i].prevout.n)){
+            CAmount nValueOut = tx.GetValueOut();
+            nValueOut += 100000ULL;
+            nResult = nValueOut;
+            return nResult;
         } else {
             nResult += GetOutputFor(tx.vin[i]).nValue;
         }

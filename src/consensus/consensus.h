@@ -13,7 +13,7 @@ static const unsigned int MAX_BLOCK_SERIALIZED_SIZE = 4000000;
 /** The maximum allowed weight for a block, see BIP 141 (network rule) */
 static const unsigned int MAX_BLOCK_WEIGHT = 4000000;
 /** The maximum allowed size for a block excluding witness data, in bytes (network rule) */
-static const unsigned int MAX_BLOCK_BASE_SIZE = 1000000;
+static const unsigned int MAX_BLOCK_BASE_SIZE = 8000000;
 /** The maximum allowed number of signature check operations in a block (network rule) */
 // NEW: change the max number sigops cost 
 static const int64_t MAX_BLOCK_SIGOPS_COST = 1000000000;

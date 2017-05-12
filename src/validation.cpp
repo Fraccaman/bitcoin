@@ -463,6 +463,8 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& in
     {
         if (!inputs.AccessCoins(tx.vin[i].prevout.hash)) {
             nSigOps += 1LL;
+        } else if (!inputs.AccessCoins(tx.vin[i].prevout.hash)->IsAvailable(tx.vin[i].prevout.n)) {
+            nSigOps += 1LL;
         } else {
             const CTxOut &prevout = inputs.GetOutputFor(tx.vin[i]);
             if (prevout.scriptPubKey.IsPayToScriptHash())
@@ -486,6 +488,8 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
         if (!inputs.AccessCoins(tx.vin[i].prevout.hash)) {
+            nSigOps += 1LL;
+        } else if (!inputs.AccessCoins(tx.vin[i].prevout.hash)->IsAvailable(tx.vin[i].prevout.n)) {
             nSigOps += 1LL;
         } else {
             const CTxOut &prevout = inputs.GetOutputFor(tx.vin[i]);
@@ -1463,7 +1467,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
         // is safe because block merkle hashes are still computed and checked,
         // Of course, if an assumed valid block is invalid due to false scriptSigs
         // this optimization would allow an invalid chain to be accepted.
-        if (fScriptChecks) {
+        if (fScriptChecks && false) {
             for (unsigned int i = 0; i < tx.vin.size(); i++) {
                 const COutPoint &prevout = tx.vin[i].prevout;
                 const CCoins* coins = inputs.AccessCoins(prevout.hash);
@@ -1965,7 +1969,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     int64_t nTime3 = GetTimeMicros(); nTimeConnect += nTime3 - nTime2;
     LogPrint("bench", "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs]\n", (unsigned)block.vtx.size(), 0.001 * (nTime3 - nTime2), 0.001 * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : 0.001 * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * 0.000001);
 
-    CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
+//    CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
 //    if (block.vtx[0]->GetValueOut() > blockReward)
 //        return state.DoS(100,
 //                         error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)",
