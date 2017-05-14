@@ -408,7 +408,6 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     if (request.params.size() > 0)
     {
         if(request.params[0].isNum()) {
-          LogPrintf("Testing size request %d\n", request.params[0].get_int64());
           block_size = request.params[0].get_int64();
         } else {
         const UniValue& oparam = request.params[0].get_obj();
@@ -679,8 +678,6 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         // Note that this can probably also be removed entirely after the first BIP9 non-force deployment (ie, probably segwit) gets activated
         aMutable.push_back("version/force");
     }
-    
-    // LogPrintf("Txs Length %d\n", transactions.size());
 
     result.push_back(Pair("previousblockhash", pblock->hashPrevBlock.GetHex()));
     result.push_back(Pair("transactions", transactions));
@@ -783,6 +780,8 @@ UniValue submitblock(const JSONRPCRequest& request)
         }
     }
 
+    LogPrintf("Mined hash: %s\n", block.GetHash().ToString());
+    
     submitblock_StateCatcher sc(block.GetHash());
     RegisterValidationInterface(&sc);
     bool fAccepted = ProcessNewBlock(Params(), blockptr, true, NULL);
