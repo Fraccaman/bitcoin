@@ -474,8 +474,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     if(!g_connman)
         throw JSONRPCError(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
 
-    if (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0)
-        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Bitcoin is not connected!");
+//    if (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0)
+//        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Bitcoin is not connected!");
 
     if (IsInitialBlockDownload())
         throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Bitcoin is downloading blocks...");
@@ -779,8 +779,6 @@ UniValue submitblock(const JSONRPCRequest& request)
             UpdateUncommittedBlockStructures(block, mi->second, Params().GetConsensus());
         }
     }
-
-    LogPrintf("Mined hash: %s\n", block.GetHash().ToString());
     
     submitblock_StateCatcher sc(block.GetHash());
     RegisterValidationInterface(&sc);
@@ -794,6 +792,7 @@ UniValue submitblock(const JSONRPCRequest& request)
     }
     if (!sc.found)
         return "inconclusive";
+    LogPrintf("New Block has been mined: %s\n", block.GetHash().ToString());
     return BIP22ValidationResult(sc.state);
 }
 
