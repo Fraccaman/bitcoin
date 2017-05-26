@@ -2147,6 +2147,8 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 MarkBlockAsReceived(pblock->GetHash());
             }
         }
+        
+        // NEW:
 
     }
 
@@ -2214,6 +2216,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             ProcessNewBlock(chainparams, pblock, true, &fNewBlock);
             if (fNewBlock)
                 pfrom->nLastBlockTime = GetTime();
+            
         }
     }
 

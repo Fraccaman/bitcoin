@@ -34,7 +34,7 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFe
     nSizeWithDescendants = GetTxSize();
     nModFeesWithDescendants = nFee;
     CAmount nValueIn = tx->GetValueOut()+nFee;
-    assert(inChainInputValue <= nValueIn);
+//    assert(inChainInputValue <= nValueIn);
 
     feeDelta = 0;
 
